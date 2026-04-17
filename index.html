@@ -27,10 +27,11 @@
         .container { width: 100%; max-width: 1000px; background: var(--bg-primary); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 100vh; box-sizing: border-box; }
         .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
         
+        /* Overall Dashboard Stats */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-        .stat-value { font-size: 22px; font-weight: bold; display: block; }
-        .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: bold; display: block; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .input-area { display: flex; flex-direction: row; gap: 12px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-start; }
@@ -39,14 +40,14 @@
         .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); font-size: 11px; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-top: 4px; }
         
-        .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); transition: all 0.2s; }
-        .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.05); }
-        .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.05); }
+        .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); }
+        .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.03); }
+        .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.03); }
         
         .progress-container { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
         
-        .tab-btn { border: none; background: none; padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; white-space: nowrap; }
+        .tab-btn { border: none; background: none; padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
         .manage-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; }
         .hidden { display: none !important; }
@@ -75,9 +76,10 @@
             </div>
         </div>
 
+        <p style="font-size: 12px; font-weight: bold; margin-bottom: 10px; color: var(--text-secondary);">OVERALL PERFORMANCE (ALL PERIODS)</p>
         <div class="dashboard" id="overallStats">
-            <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total</span></div>
-            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Complete</span></div>
+            <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total Tasks</span></div>
+            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Completed</span></div>
             <div class="stat-card"><span class="stat-value" id="pendingTasks" style="color:var(--incomplete)">0</span><span class="stat-label">Pending</span></div>
         </div>
 
@@ -138,6 +140,7 @@
             document.getElementById('appSection').classList.remove('hidden');
             document.getElementById('greeting').textContent = `Hi, ${user.displayName.split(' ')[0]}!`;
             loadUserCategories();
+            updateOverallDashboard(); // Initial call
             listenToData();
         } else {
             document.getElementById('loginSection').classList.remove('hidden');
@@ -145,6 +148,7 @@
         }
     });
 
+    // CATEGORY MANAGEMENT
     function loadUserCategories() {
         onValue(ref(db, `users/${currentUID}/settings/categories`), (snap) => {
             const data = snap.val();
@@ -162,7 +166,7 @@
         const name = prompt("Enter new category name:");
         if (name && !myCategories.includes(name.trim())) {
             myCategories.push(name.trim());
-            saveCategories();
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
         }
     };
 
@@ -172,14 +176,34 @@
         if (!toDelete || myCategories.length <= 1) return;
         if (confirm(`Remove "${toDelete}" from your list?`)) {
             myCategories = myCategories.filter(c => c !== toDelete);
-            saveCategories();
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
         }
     };
 
-    function saveCategories() {
-        set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+    // DASHBOARD LOGIC (Calculates from all paths)
+    function updateOverallDashboard() {
+        onValue(ref(db, `users/${currentUID}`), (snapshot) => {
+            const data = snapshot.val();
+            let total = 0, done = 0;
+            
+            if (data) {
+                ['daily', 'weekly', 'monthly', 'yearly'].forEach(tab => {
+                    if (data[tab]) {
+                        Object.values(data[tab]).forEach(t => {
+                            total++;
+                            if (t.completed) done++;
+                        });
+                    }
+                });
+            }
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('doneTasks').textContent = done;
+            document.getElementById('pendingTasks').textContent = total - done;
+        });
     }
 
+    // TASK LOGIC
     window.switchTab = (tab) => {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -217,14 +241,12 @@
     function renderTasks(tasks) {
         const grid = document.getElementById('tasksGrid');
         grid.innerHTML = '';
-        
-        const taskEntries = tasks ? Object.entries(tasks) : [];
-        const total = taskEntries.length;
-        const done = taskEntries.filter(([id, t]) => t.completed).length;
-        document.getElementById('totalTasks').textContent = total;
-        document.getElementById('doneTasks').textContent = done;
-        document.getElementById('pendingTasks').textContent = total - done;
+        if (!tasks) {
+            grid.innerHTML = `<p style="text-align:center; width:100%; color:var(--text-secondary); margin-top:40px;">No tasks in this period.</p>`;
+            return;
+        }
 
+        const taskEntries = Object.entries(tasks);
         const categoriesInUse = [...new Set(taskEntries.map(([id, t]) => t.category))].sort();
 
         categoriesInUse.forEach(cat => {
