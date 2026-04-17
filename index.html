@@ -13,7 +13,6 @@
             --border: #e1e4e8;
             --accent: #378ADD;
         }
-
         [data-theme="dark"] {
             --bg-primary: #121212;
             --bg-secondary: #1e1e1e;
@@ -21,118 +20,21 @@
             --text-secondary: #a0a0a0;
             --border: #333333;
         }
-
-        body {
-            font-family: -apple-system, sans-serif;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            background: var(--bg-primary);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            min-height: 95vh;
-        }
-
-        .auth-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 70vh;
-            text-align: center;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .input-area {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: var(--bg-secondary);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        input, select, button {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-size: 14px;
-        }
-
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-secondary); color: var(--text-primary); margin: 0; padding: 10px; display: flex; justify-content: center; transition: all 0.3s ease; }
+        .container { width: 100%; max-width: 1000px; background: var(--bg-primary); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 95vh; }
+        .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .input-area { display: flex; flex-wrap: wrap; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        input, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; }
         .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
-        .task-card {
-            background: var(--bg-primary);
-            padding: 12px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .progress-container {
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
+        .task-card { background: var(--bg-primary); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .progress-container { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
         .hidden { display: none !important; }
-
-        .tab-btn {
-            border: none;
-            background: none;
-            padding: 12px 20px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-secondary);
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-
-        @media (max-width: 600px) {
-            .container { padding: 15px; border-radius: 0; }
-            .input-area input, .input-area select { width: 100%; }
-        }
+        .tab-btn { border: none; background: none; padding: 12px 20px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        @media (max-width: 600px) { .container { padding: 15px; border-radius: 0; } .input-area input { width: 100%; } }
     </style>
 </head>
 <body>
@@ -160,14 +62,9 @@
         </div>
 
         <div class="input-area">
-            <input type="text" id="taskInput" placeholder="Add a new task..." style="flex: 2;">
-            <select id="categorySelect" style="flex: 1;">
-                <option value="work">💼 Work</option>
-                <option value="personal">👤 Personal</option>
-                <option value="startup">🚀 Startup</option>
-                <option value="vlsi">📑 VLSI/IoT</option>
-            </select>
-            <button onclick="addTask()" class="btn-primary" id="addBtn">Add Task</button>
+            <input type="text" id="taskInput" placeholder="What's the task?" style="flex: 2;">
+            <input type="text" id="categoryInput" placeholder="Category (e.g. VLSI)" style="flex: 1;">
+            <button onclick="addTask()" class="btn-primary">Add Task</button>
         </div>
 
         <div class="grid" id="tasksGrid"></div>
@@ -179,7 +76,6 @@
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBTjnTFxrFYbbNUio6wQvt1Kr-I4mMdecc",
         authDomain: "focus-2026d.firebaseapp.com",
@@ -223,17 +119,22 @@
 
     window.addTask = () => {
         const input = document.getElementById('taskInput');
-        const category = document.getElementById('categorySelect').value;
-        if (!input.value.trim()) return;
+        const catInput = document.getElementById('categoryInput');
+        
+        const taskText = input.value.trim();
+        const category = catInput.value.trim() || "General"; // Default to General if empty
 
-        const tasksRef = ref(db, `users/${currentUID}/${currentTab}`);
-        push(tasksRef, {
-            text: input.value,
+        if (!taskText) return;
+
+        push(ref(db, `users/${currentUID}/${currentTab}`), {
+            text: taskText,
             category: category,
             completed: false,
             timestamp: Date.now()
         });
+        
         input.value = '';
+        // Note: category stays so you can quickly add multiple tasks to the same category
     };
 
     function listenToData() {
@@ -254,13 +155,17 @@
         const grid = document.getElementById('tasksGrid');
         grid.innerHTML = '';
         
-        const categories = ['work', 'personal', 'startup', 'vlsi'];
-        const taskEntries = tasks ? Object.entries(tasks) : [];
+        if (!tasks) {
+            grid.innerHTML = `<p style="text-align:center; width: 100%; color:var(--text-secondary); margin-top: 40px;">No ${currentTab} tasks yet.</p>`;
+            return;
+        }
 
-        categories.forEach(cat => {
+        const taskEntries = Object.entries(tasks);
+        // Get unique categories from currently existing tasks
+        const uniqueCategories = [...new Set(taskEntries.map(([id, t]) => t.category))].sort();
+
+        uniqueCategories.forEach(cat => {
             const catTasks = taskEntries.filter(([id, t]) => t.category === cat);
-            if (catTasks.length === 0) return;
-
             const completed = catTasks.filter(([id, t]) => t.completed).length;
             const percent = Math.round((completed / catTasks.length) * 100);
 
@@ -290,10 +195,6 @@
             });
             grid.appendChild(col);
         });
-
-        if (taskEntries.length === 0) {
-            grid.innerHTML = `<p style="text-align:center; width: 100%; color:var(--text-secondary); margin-top: 40px;">No ${currentTab} tasks yet.</p>`;
-        }
     }
 
     window.toggleTheme = () => {
