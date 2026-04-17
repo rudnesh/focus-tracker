@@ -15,6 +15,7 @@
             --danger: #d93025;
             --complete: #007bff;
             --incomplete: #d93025;
+            --warning: #f29900;
         }
         [data-theme="dark"] {
             --bg-primary: #121212;
@@ -27,34 +28,35 @@
         .container { width: 100%; max-width: 1000px; background: var(--bg-primary); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 100vh; box-sizing: border-box; }
         .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
         
-        /* Overall Dashboard Stats */
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-        .stat-value { font-size: 24px; font-weight: bold; display: block; }
-        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-value { font-size: 20px; font-weight: bold; display: block; }
+        .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Overdue Dashboard Section */
+        .overdue-section { background: rgba(217, 48, 37, 0.1); border: 1px solid var(--danger); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
+        .overdue-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 0.5px solid rgba(217, 48, 37, 0.2); }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .input-area { display: flex; flex-direction: row; gap: 12px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-start; }
+        .input-area { display: flex; flex-direction: row; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; flex-wrap: wrap; }
         
-        input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
+        input, select, button { padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
         .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); font-size: 11px; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-top: 4px; }
         
-        .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); }
+        .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); position: relative; }
         .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.03); }
         .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.03); }
+        .deadline-tag { font-size: 10px; position: absolute; right: 40px; top: 5px; color: var(--warning); font-weight: bold; }
         
         .progress-container { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
         
         .tab-btn { border: none; background: none; padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-        .manage-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; }
         .hidden { display: none !important; }
 
         @media (max-width: 600px) { 
-            .container { padding: 12px; } 
-            .input-area { flex-direction: column; padding: 12px; gap: 10px; } 
+            .input-area { flex-direction: column; } 
             .input-area > * { width: 100% !important; }
         }
     </style>
@@ -76,10 +78,14 @@
             </div>
         </div>
 
-        <p style="font-size: 12px; font-weight: bold; margin-bottom: 10px; color: var(--text-secondary);">OVERALL PERFORMANCE (ALL PERIODS)</p>
-        <div class="dashboard" id="overallStats">
-            <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total Tasks</span></div>
-            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Completed</span></div>
+        <div id="overdueDashboard" class="overdue-section hidden">
+            <h4 style="margin: 0 0 10px 0; color: var(--danger); font-size: 12px;">⚠️ DEADLINES REACHED / OVERDUE</h4>
+            <div id="overdueList"></div>
+        </div>
+
+        <div class="dashboard">
+            <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total</span></div>
+            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Done</span></div>
             <div class="stat-card"><span class="stat-value" id="pendingTasks" style="color:var(--incomplete)">0</span><span class="stat-label">Pending</span></div>
         </div>
 
@@ -92,13 +98,8 @@
 
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="New task..." style="flex: 2;">
-            <div style="flex: 1; display: flex; flex-direction: column;">
-                <select id="categorySelect" style="width: 100%;"></select>
-                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                    <span class="manage-link" onclick="promptNewCategory()">+ Add</span>
-                    <span class="btn-danger" onclick="deleteSelectedCategory()">Delete Selected</span>
-                </div>
-            </div>
+            <select id="categorySelect" style="flex: 1;"></select>
+            <input type="date" id="deadlineInput" class="hidden" style="flex: 1;">
             <button onclick="addTask()" class="btn-primary">Add</button>
         </div>
 
@@ -140,84 +141,89 @@
             document.getElementById('appSection').classList.remove('hidden');
             document.getElementById('greeting').textContent = `Hi, ${user.displayName.split(' ')[0]}!`;
             loadUserCategories();
-            updateOverallDashboard(); // Initial call
             listenToData();
+            updateDashboard(); // Continuous listener for stats and deadlines
         } else {
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('appSection').classList.add('hidden');
         }
     });
 
-    // CATEGORY MANAGEMENT
     function loadUserCategories() {
         onValue(ref(db, `users/${currentUID}/settings/categories`), (snap) => {
             const data = snap.val();
             if (data) myCategories = data;
-            updateCategoryDropdown();
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = myCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
         });
     }
 
-    function updateCategoryDropdown() {
-        const select = document.getElementById('categorySelect');
-        select.innerHTML = myCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-    }
-
-    window.promptNewCategory = () => {
-        const name = prompt("Enter new category name:");
-        if (name && !myCategories.includes(name.trim())) {
-            myCategories.push(name.trim());
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
-        }
-    };
-
-    window.deleteSelectedCategory = () => {
-        const select = document.getElementById('categorySelect');
-        const toDelete = select.value;
-        if (!toDelete || myCategories.length <= 1) return;
-        if (confirm(`Remove "${toDelete}" from your list?`)) {
-            myCategories = myCategories.filter(c => c !== toDelete);
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
-        }
-    };
-
-    // DASHBOARD LOGIC (Calculates from all paths)
-    function updateOverallDashboard() {
+    // DASHBOARD & DEADLINE LOGIC
+    function updateDashboard() {
         onValue(ref(db, `users/${currentUID}`), (snapshot) => {
             const data = snapshot.val();
-            let total = 0, done = 0;
+            const overdueList = document.getElementById('overdueList');
+            const dashboardSection = document.getElementById('overdueDashboard');
             
+            let total = 0, done = 0, overdueHtml = "";
+            const today = new Date().toISOString().split('T')[0];
+
             if (data) {
                 ['daily', 'weekly', 'monthly', 'yearly'].forEach(tab => {
                     if (data[tab]) {
-                        Object.values(data[tab]).forEach(t => {
+                        Object.entries(data[tab]).forEach(([id, t]) => {
                             total++;
-                            if (t.completed) done++;
+                            if (t.completed) {
+                                done++;
+                            } else if (t.deadline && t.deadline <= today) {
+                                // Reached deadline logic
+                                overdueHtml += `
+                                    <div class="overdue-item">
+                                        <span><strong>[${tab.toUpperCase()}]</strong> ${t.text} (Due: ${t.deadline})</span>
+                                        <a href="#" onclick="switchTab('${tab}')" style="color:var(--accent); font-weight:bold;">VIEW →</a>
+                                    </div>`;
+                            }
                         });
                     }
                 });
             }
-            
+
             document.getElementById('totalTasks').textContent = total;
             document.getElementById('doneTasks').textContent = done;
             document.getElementById('pendingTasks').textContent = total - done;
+
+            if (overdueHtml) {
+                overdueList.innerHTML = overdueHtml;
+                dashboardSection.classList.remove('hidden');
+            } else {
+                dashboardSection.classList.add('hidden');
+            }
         });
     }
 
-    // TASK LOGIC
     window.switchTab = (tab) => {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+        
+        // Hide/Show Deadline input
+        const dateInput = document.getElementById('deadlineInput');
+        if (tab === 'daily') dateInput.classList.add('hidden');
+        else dateInput.classList.remove('hidden');
+        
         listenToData();
     };
 
     window.addTask = () => {
         const input = document.getElementById('taskInput');
         const category = document.getElementById('categorySelect').value;
-        if (!input.value.trim() || !category) return;
+        const deadline = document.getElementById('deadlineInput').value;
+        if (!input.value.trim()) return;
+
         push(ref(db, `users/${currentUID}/${currentTab}`), {
             text: input.value.trim(),
             category: category,
+            deadline: (currentTab !== 'daily' && deadline) ? deadline : null,
             completed: false,
             timestamp: Date.now()
         });
@@ -242,7 +248,7 @@
         const grid = document.getElementById('tasksGrid');
         grid.innerHTML = '';
         if (!tasks) {
-            grid.innerHTML = `<p style="text-align:center; width:100%; color:var(--text-secondary); margin-top:40px;">No tasks in this period.</p>`;
+            grid.innerHTML = `<p style="text-align:center; width:100%; color:var(--text-secondary); margin-top:40px;">No tasks here.</p>`;
             return;
         }
 
@@ -257,7 +263,7 @@
             const col = document.createElement('div');
             col.innerHTML = `
                 <div class="category-header">
-                    <h3 style="font-size: 14px; border-left: 3px solid var(--accent); padding-left: 8px;">${cat.toUpperCase()}</h3>
+                    <h3 style="font-size: 14px; border-left: 3px solid var(--accent); padding-left: 8px; margin: 0;">${cat.toUpperCase()}</h3>
                     <span style="font-size: 12px; font-weight: bold; color: var(--accent);">${percent}%</span>
                 </div>
                 <div class="progress-container"><div class="progress-fill" style="width:${percent}%"></div></div>
@@ -267,6 +273,7 @@
                 const item = document.createElement('div');
                 item.className = `task-card ${t.completed ? 'task-complete' : 'task-incomplete'}`;
                 item.innerHTML = `
+                    ${t.deadline && !t.completed ? `<span class="deadline-tag">📅 ${t.deadline}</span>` : ''}
                     <input type="checkbox" ${t.completed ? 'checked' : ''} style="cursor:pointer; width:18px; height:18px;">
                     <span style="flex:1; cursor:pointer; font-size:14px; ${t.completed ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
                     <span style="cursor:pointer; opacity:0.3; padding:5px;">✕</span>
@@ -283,6 +290,24 @@
     window.toggleTheme = () => {
         const current = document.documentElement.getAttribute('data-theme');
         document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    };
+    
+    // Default categories setup
+    window.promptNewCategory = () => {
+        const name = prompt("Enter new category name:");
+        if (name && !myCategories.includes(name.trim())) {
+            myCategories.push(name.trim());
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+        }
+    };
+    window.deleteSelectedCategory = () => {
+        const select = document.getElementById('categorySelect');
+        const toDelete = select.value;
+        if (!toDelete || myCategories.length <= 1) return;
+        if (confirm(`Remove "${toDelete}"?`)) {
+            myCategories = myCategories.filter(c => c !== toDelete);
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+        }
     };
 </script>
 </body>
