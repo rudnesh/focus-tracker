@@ -12,6 +12,7 @@
             --text-secondary: #666666;
             --border: #e1e4e8;
             --accent: #378ADD;
+            --danger: #d93025;
         }
         [data-theme="dark"] {
             --bg-primary: #121212;
@@ -24,9 +25,10 @@
         .container { width: 100%; max-width: 1000px; background: var(--bg-primary); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 95vh; }
         .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-        .input-area { display: flex; flex-wrap: wrap; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: center; }
+        .input-area { display: flex; flex-wrap: wrap; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-start; }
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
         .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); font-size: 11px; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-top: 4px; }
         .task-card { background: var(--bg-primary); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
         .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .progress-container { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
@@ -34,7 +36,7 @@
         .hidden { display: none !important; }
         .tab-btn { border: none; background: none; padding: 12px 20px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s; }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-        .manage-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; margin-left: 5px; }
+        .manage-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; }
         @media (max-width: 600px) { .container { padding: 15px; border-radius: 0; } .input-area input, .input-area select { width: 100%; } }
     </style>
 </head>
@@ -64,9 +66,12 @@
 
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="Task name..." style="flex: 2;">
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                <select id="categorySelect"></select>
-                <span class="manage-link" onclick="promptNewCategory()">+ Add New Category</span>
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <select id="categorySelect" style="width: 100%;"></select>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <span class="manage-link" onclick="promptNewCategory()">+ Add</span>
+                    <span class="btn-danger" onclick="deleteSelectedCategory()">Delete Selected</span>
+                </div>
             </div>
             <button onclick="addTask()" class="btn-primary">Add Task</button>
         </div>
@@ -97,7 +102,7 @@
 
     let currentUID = null;
     let currentTab = 'daily';
-    let myCategories = ['General', 'VLSI', 'Work', 'Personal']; // Default list
+    let myCategories = ['General', 'VLSI', 'Work', 'Personal'];
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -116,7 +121,7 @@
         }
     });
 
-    // Handle Categories
+    // --- Category Management ---
     function loadUserCategories() {
         onValue(ref(db, `users/${currentUID}/settings/categories`), (snap) => {
             const data = snap.val();
@@ -133,11 +138,27 @@
     window.promptNewCategory = () => {
         const name = prompt("Enter new category name:");
         if (name && !myCategories.includes(name)) {
-            myCategories.push(name);
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+            myCategories.push(name.trim());
+            saveCategories();
         }
     };
 
+    window.deleteSelectedCategory = () => {
+        const select = document.getElementById('categorySelect');
+        const toDelete = select.value;
+        if (!toDelete) return;
+
+        if (confirm(`Remove "${toDelete}" from your dropdown list?`)) {
+            myCategories = myCategories.filter(c => c !== toDelete);
+            saveCategories();
+        }
+    };
+
+    function saveCategories() {
+        set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+    }
+
+    // --- Task Logic ---
     window.switchTab = (tab) => {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -148,7 +169,7 @@
     window.addTask = () => {
         const input = document.getElementById('taskInput');
         const category = document.getElementById('categorySelect').value;
-        if (!input.value.trim()) return;
+        if (!input.value.trim() || !category) return;
 
         push(ref(db, `users/${currentUID}/${currentTab}`), {
             text: input.value.trim(),
@@ -173,14 +194,6 @@
         remove(ref(db, `users/${currentUID}/${currentTab}/${taskId}`));
     };
 
-    // Remove category if it has no tasks and user wants to delete
-    window.removeCategory = (catName) => {
-        if (confirm(`Remove the "${catName}" category from your list?`)) {
-            myCategories = myCategories.filter(c => c !== catName);
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
-        }
-    };
-
     function renderTasks(tasks) {
         const grid = document.getElementById('tasksGrid');
         grid.innerHTML = '';
@@ -200,10 +213,7 @@
             const col = document.createElement('div');
             col.innerHTML = `
                 <div class="category-header">
-                    <h3 style="font-size: 14px; border-left: 3px solid var(--accent); padding-left: 8px;">
-                        ${cat.toUpperCase()} 
-                        <span style="font-size:10px; cursor:pointer; opacity:0.4; margin-left:5px;" onclick="removeCategory('${cat}')">🗑️</span>
-                    </h3>
+                    <h3 style="font-size: 14px; border-left: 3px solid var(--accent); padding-left: 8px;">${cat.toUpperCase()}</h3>
                     <span style="font-size: 12px; font-weight: bold; color: var(--accent);">${percent}%</span>
                 </div>
                 <div class="progress-container"><div class="progress-fill" style="width:${percent}%"></div></div>
