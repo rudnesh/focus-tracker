@@ -15,7 +15,6 @@
             --danger: #d93025;
             --complete: #007bff;
             --incomplete: #d93025;
-            --warning: #f29900;
         }
         [data-theme="dark"] {
             --bg-primary: #121212;
@@ -26,27 +25,24 @@
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg-secondary); color: var(--text-primary); margin: 0; padding: 0; display: flex; justify-content: center; transition: all 0.3s ease; }
         .container { width: 100%; max-width: 1000px; background: var(--bg-primary); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 100vh; box-sizing: border-box; }
-        .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
         
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--bg-secondary); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-        .stat-value { font-size: 20px; font-weight: bold; display: block; }
+        /* Overall Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .stat-card { background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .stat-value { font-size: 22px; font-weight: bold; display: block; }
         .stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Overdue Dashboard Section */
-        .overdue-section { background: rgba(217, 48, 37, 0.1); border: 1px solid var(--danger); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
-        .overdue-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 0.5px solid rgba(217, 48, 37, 0.2); }
+        /* Input Area Fix for Mobile */
+        .input-area { display: flex; flex-direction: row; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-start; }
+        input, select, button { padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
+        
+        .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; height: 42px; }
+        .btn-danger-small { color: var(--danger); font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 5px; background: none; border: none; padding: 0; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .input-area { display: flex; flex-direction: row; gap: 10px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-        
-        input, select, button { padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
-        .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
         .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); position: relative; }
-        .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.03); }
-        .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.03); }
-        .deadline-tag { font-size: 10px; position: absolute; right: 40px; top: 5px; color: var(--warning); font-weight: bold; }
+        .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.02); }
+        .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.02); }
         
         .progress-container { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
@@ -56,36 +52,32 @@
         .hidden { display: none !important; }
 
         @media (max-width: 600px) { 
-            .input-area { flex-direction: column; } 
+            .input-area { flex-direction: column; padding: 12px; } 
             .input-area > * { width: 100% !important; }
+            .cat-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loginSection" class="auth-screen">
+    <div id="loginSection" style="text-align:center; padding-top: 50px;">
         <h1>Focus Tracker</h1>
         <button onclick="login()" class="btn-primary" style="padding: 15px 30px;">Login with Google</button>
     </div>
 
     <div id="appSection" class="hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 id="greeting" style="margin:0; font-size: 18px;">Welcome</h2>
+            <h2 id="greeting" style="margin:0; font-size: 18px;">Hi, RUDNESH!</h2>
             <div style="display: flex; gap: 10px;">
                 <button onclick="toggleTheme()" style="background:none; border:none; font-size: 20px; cursor:pointer;">🌓</button>
-                <button onclick="logout()" style="font-size: 12px;">Sign Out</button>
+                <button onclick="logout()" style="font-size: 11px;">Sign Out</button>
             </div>
-        </div>
-
-        <div id="overdueDashboard" class="overdue-section hidden">
-            <h4 style="margin: 0 0 10px 0; color: var(--danger); font-size: 12px;">⚠️ DEADLINES REACHED / OVERDUE</h4>
-            <div id="overdueList"></div>
         </div>
 
         <div class="dashboard">
             <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total</span></div>
-            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Done</span></div>
+            <div class="stat-card"><span class="stat-value" id="totalHrs">0h</span><span class="stat-label">Hours</span></div>
             <div class="stat-card"><span class="stat-value" id="pendingTasks" style="color:var(--incomplete)">0</span><span class="stat-label">Pending</span></div>
         </div>
 
@@ -97,9 +89,15 @@
         </div>
 
         <div class="input-area">
-            <input type="text" id="taskInput" placeholder="New task..." style="flex: 2;">
-            <select id="categorySelect" style="flex: 1;"></select>
-            <input type="date" id="deadlineInput" class="hidden" style="flex: 1;">
+            <input type="text" id="taskInput" placeholder="Task name..." style="flex: 2;">
+            <input type="number" id="hrInput" placeholder="Hrs" style="width: 70px;">
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <select id="categorySelect" style="width: 100%;"></select>
+                <div class="cat-controls">
+                    <span style="font-size: 11px; color: var(--accent); cursor:pointer;" onclick="promptNewCategory()">+ Add</span>
+                    <button class="btn-danger-small" onclick="deleteSelectedCategory()">Delete</button>
+                </div>
+            </div>
             <button onclick="addTask()" class="btn-primary">Add</button>
         </div>
 
@@ -139,10 +137,9 @@
             currentUID = user.uid;
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('appSection').classList.remove('hidden');
-            document.getElementById('greeting').textContent = `Hi, ${user.displayName.split(' ')[0]}!`;
             loadUserCategories();
             listenToData();
-            updateDashboard(); // Continuous listener for stats and deadlines
+            updateOverallStats();
         } else {
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('appSection').classList.add('hidden');
@@ -153,51 +150,45 @@
         onValue(ref(db, `users/${currentUID}/settings/categories`), (snap) => {
             const data = snap.val();
             if (data) myCategories = data;
-            const select = document.getElementById('categorySelect');
-            select.innerHTML = myCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            document.getElementById('categorySelect').innerHTML = myCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
         });
     }
 
-    // DASHBOARD & DEADLINE LOGIC
-    function updateDashboard() {
+    window.promptNewCategory = () => {
+        const name = prompt("New category name:");
+        if (name && !myCategories.includes(name.trim())) {
+            myCategories.push(name.trim());
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+        }
+    };
+
+    window.deleteSelectedCategory = () => {
+        const val = document.getElementById('categorySelect').value;
+        if (confirm(`Delete "${val}"?`)) {
+            myCategories = myCategories.filter(c => c !== val);
+            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+        }
+    };
+
+    // Dashboard Logic
+    function updateOverallStats() {
         onValue(ref(db, `users/${currentUID}`), (snapshot) => {
             const data = snapshot.val();
-            const overdueList = document.getElementById('overdueList');
-            const dashboardSection = document.getElementById('overdueDashboard');
-            
-            let total = 0, done = 0, overdueHtml = "";
-            const today = new Date().toISOString().split('T')[0];
-
+            let total = 0, done = 0, hrs = 0;
             if (data) {
                 ['daily', 'weekly', 'monthly', 'yearly'].forEach(tab => {
                     if (data[tab]) {
-                        Object.entries(data[tab]).forEach(([id, t]) => {
+                        Object.values(data[tab]).forEach(t => {
                             total++;
-                            if (t.completed) {
-                                done++;
-                            } else if (t.deadline && t.deadline <= today) {
-                                // Reached deadline logic
-                                overdueHtml += `
-                                    <div class="overdue-item">
-                                        <span><strong>[${tab.toUpperCase()}]</strong> ${t.text} (Due: ${t.deadline})</span>
-                                        <a href="#" onclick="switchTab('${tab}')" style="color:var(--accent); font-weight:bold;">VIEW →</a>
-                                    </div>`;
-                            }
+                            if (t.completed) done++;
+                            if (t.hrs) hrs += parseFloat(t.hrs);
                         });
                     }
                 });
             }
-
             document.getElementById('totalTasks').textContent = total;
-            document.getElementById('doneTasks').textContent = done;
+            document.getElementById('totalHrs').textContent = hrs + 'h';
             document.getElementById('pendingTasks').textContent = total - done;
-
-            if (overdueHtml) {
-                overdueList.innerHTML = overdueHtml;
-                dashboardSection.classList.remove('hidden');
-            } else {
-                dashboardSection.classList.add('hidden');
-            }
         });
     }
 
@@ -205,29 +196,24 @@
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-        
-        // Hide/Show Deadline input
-        const dateInput = document.getElementById('deadlineInput');
-        if (tab === 'daily') dateInput.classList.add('hidden');
-        else dateInput.classList.remove('hidden');
-        
         listenToData();
     };
 
     window.addTask = () => {
         const input = document.getElementById('taskInput');
+        const hr = document.getElementById('hrInput');
         const category = document.getElementById('categorySelect').value;
-        const deadline = document.getElementById('deadlineInput').value;
         if (!input.value.trim()) return;
 
         push(ref(db, `users/${currentUID}/${currentTab}`), {
             text: input.value.trim(),
+            hrs: hr.value || 0,
             category: category,
-            deadline: (currentTab !== 'daily' && deadline) ? deadline : null,
             completed: false,
             timestamp: Date.now()
         });
         input.value = '';
+        hr.value = '';
     };
 
     function listenToData() {
@@ -247,24 +233,21 @@
     function renderTasks(tasks) {
         const grid = document.getElementById('tasksGrid');
         grid.innerHTML = '';
-        if (!tasks) {
-            grid.innerHTML = `<p style="text-align:center; width:100%; color:var(--text-secondary); margin-top:40px;">No tasks here.</p>`;
-            return;
-        }
+        if (!tasks) return;
 
-        const taskEntries = Object.entries(tasks);
-        const categoriesInUse = [...new Set(taskEntries.map(([id, t]) => t.category))].sort();
+        const entries = Object.entries(tasks);
+        const categories = [...new Set(entries.map(([id, t]) => t.category))].sort();
 
-        categoriesInUse.forEach(cat => {
-            const catTasks = taskEntries.filter(([id, t]) => t.category === cat);
-            const catDone = catTasks.filter(([id, t]) => t.completed).length;
-            const percent = Math.round((catDone / catTasks.length) * 100);
+        categories.forEach(cat => {
+            const catTasks = entries.filter(([id, t]) => t.category === cat);
+            const done = catTasks.filter(([id, t]) => t.completed).length;
+            const percent = Math.round((done / catTasks.length) * 100);
 
             const col = document.createElement('div');
             col.innerHTML = `
                 <div class="category-header">
-                    <h3 style="font-size: 14px; border-left: 3px solid var(--accent); padding-left: 8px; margin: 0;">${cat.toUpperCase()}</h3>
-                    <span style="font-size: 12px; font-weight: bold; color: var(--accent);">${percent}%</span>
+                    <h3 style="font-size: 13px; border-left: 3px solid var(--accent); padding-left: 8px; margin:0;">${cat.toUpperCase()}</h3>
+                    <span style="font-size: 11px; font-weight: bold; color: var(--accent);">${percent}%</span>
                 </div>
                 <div class="progress-container"><div class="progress-fill" style="width:${percent}%"></div></div>
             `;
@@ -273,14 +256,12 @@
                 const item = document.createElement('div');
                 item.className = `task-card ${t.completed ? 'task-complete' : 'task-incomplete'}`;
                 item.innerHTML = `
-                    ${t.deadline && !t.completed ? `<span class="deadline-tag">📅 ${t.deadline}</span>` : ''}
-                    <input type="checkbox" ${t.completed ? 'checked' : ''} style="cursor:pointer; width:18px; height:18px;">
-                    <span style="flex:1; cursor:pointer; font-size:14px; ${t.completed ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
-                    <span style="cursor:pointer; opacity:0.3; padding:5px;">✕</span>
+                    <input type="checkbox" ${t.completed ? 'checked' : ''} style="cursor:pointer; width:17px; height:17px;">
+                    <span style="flex:1; cursor:pointer; font-size:13px; ${t.completed ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text} ${t.hrs ? `(${t.hrs}h)` : ''}</span>
+                    <span style="cursor:pointer; opacity:0.3; padding:5px;" onclick="window.deleteTask('${id}')">✕</span>
                 `;
                 item.querySelector('input').onclick = () => window.toggleTask(id, t.completed);
                 item.querySelector('span:nth-child(2)').onclick = () => window.toggleTask(id, t.completed);
-                item.querySelector('span:last-child').onclick = () => window.deleteTask(id);
                 col.appendChild(item);
             });
             grid.appendChild(col);
@@ -290,24 +271,6 @@
     window.toggleTheme = () => {
         const current = document.documentElement.getAttribute('data-theme');
         document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-    };
-    
-    // Default categories setup
-    window.promptNewCategory = () => {
-        const name = prompt("Enter new category name:");
-        if (name && !myCategories.includes(name.trim())) {
-            myCategories.push(name.trim());
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
-        }
-    };
-    window.deleteSelectedCategory = () => {
-        const select = document.getElementById('categorySelect');
-        const toDelete = select.value;
-        if (!toDelete || myCategories.length <= 1) return;
-        if (confirm(`Remove "${toDelete}"?`)) {
-            myCategories = myCategories.filter(c => c !== toDelete);
-            set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
-        }
     };
 </script>
 </body>
