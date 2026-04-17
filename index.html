@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Tracker Pro (RTDB)</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f4f4f7;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #e1e4e8;
+            --accent: #378ADD;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #e4e4e4;
+            --text-secondary: #a0a0a0;
+            --border: #333333;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            min-height: 95vh;
+        }
+
+        .auth-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 70vh;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .input-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        
+        .task-card {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; border-radius: 0; }
+            .input-area input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loginSection" class="auth-screen">
+        <h1>Focus Tracker</h1>
+        <p style="color: var(--text-secondary);">Sync your VLSI & IoT progress across devices</p>
+        <button onclick="login()" class="btn-primary" style="padding: 15px 30px;">Login with Google</button>
+    </div>
+
+    <div id="appSection" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 id="greeting" style="margin:0; font-size: 18px;">Welcome</h2>
+            <div>
+                <button onclick="toggleTheme()" style="background:none; border:none; font-size: 20px; cursor:pointer;">🌓</button>
+                <button onclick="logout()" style="margin-left:10px;">Sign Out</button>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="taskInput" placeholder="What's your focus?">
+            <select id="typeSelect">
+                <option value="class">📚 Class</option>
+                <option value="career">💼 Career</option>
+                <option value="startup">🚀 Startup</option>
+                <option value="personal">👤 Personal</option>
+            </select>
+            <button onclick="addTask()" class="btn-primary">Add</button>
+        </div>
+
+        <div class="grid" id="tasksGrid"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBTjnTFxrFYbbNUio6wQvt1Kr-I4mMdecc",
+        authDomain: "focus-2026d.firebaseapp.com",
+        databaseURL: "https://focus-2026d-default-rtdb.firebaseio.com/",
+        projectId: "focus-2026d",
+        storageBucket: "focus-2026d.firebasestorage.app",
+        messagingSenderId: "668715768658",
+        appId: "1:668715768658:web:0eb20f038c18a500f4f88b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUID = null;
+
+    window.login = () => signInWithPopup(auth, provider);
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUID = user.uid;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('greeting').textContent = `Hi, ${user.displayName.split(' ')[0]}!`;
+            listenToData();
+        } else {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('appSection').classList.add('hidden');
+        }
+    });
+
+    window.addTask = () => {
+        const input = document.getElementById('taskInput');
+        const type = document.getElementById('typeSelect').value;
+        if (!input.value.trim()) return;
+
+        const tasksRef = ref(db, `users/${currentUID}/tasks`);
+        const newTaskRef = push(tasksRef);
+        set(newTaskRef, {
+            text: input.value,
+            type: type,
+            completed: false,
+            timestamp: Date.now()
+        });
+        input.value = '';
+    };
+
+    function listenToData() {
+        const tasksRef = ref(db, `users/${currentUID}/tasks`);
+        onValue(tasksRef, (snapshot) => {
+            const data = snapshot.val();
+            renderTasks(data);
+        });
+    }
+
+    window.toggleTask = (taskId, currentStatus) => {
+        update(ref(db, `users/${currentUID}/tasks/${taskId}`), {
+            completed: !currentStatus
+        });
+    };
+
+    window.deleteTask = (taskId) => {
+        remove(ref(db, `users/${currentUID}/tasks/${taskId}`));
+    };
+
+    function renderTasks(tasks) {
+        const grid = document.getElementById('tasksGrid');
+        grid.innerHTML = '';
+        const types = ['class', 'career', 'startup', 'personal'];
+
+        types.forEach(type => {
+            const col = document.createElement('div');
+            col.innerHTML = `<h3 style="border-left: 4px solid var(--accent); padding-left: 10px; font-size: 14px;">${type.toUpperCase()}</h3>`;
+            
+            if (tasks) {
+                Object.entries(tasks).forEach(([id, t]) => {
+                    if (t.type === type) {
+                        const item = document.createElement('div');
+                        item.className = 'task-card';
+                        item.innerHTML = `
+                            <input type="checkbox" ${t.completed ? 'checked' : ''}>
+                            <span style="flex:1; cursor:pointer; font-size:14px; ${t.completed ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
+                            <span style="cursor:pointer; opacity:0.3; padding:5px;">✕</span>
+                        `;
+                        item.querySelector('input').onclick = () => window.toggleTask(id, t.completed);
+                        item.querySelector('span:nth-child(2)').onclick = () => window.toggleTask(id, t.completed);
+                        item.querySelector('span:last-child').onclick = () => window.deleteTask(id);
+                        col.appendChild(item);
+                    }
+                });
+            }
+            grid.appendChild(col);
+        });
+    }
+
+    window.toggleTheme = () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        document.documentElement.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    };
+</script>
+</body>
+</html>
