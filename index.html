@@ -27,19 +27,18 @@
         .container { width: 100%; max-width: 1000px; background: var(--bg-primary); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 100vh; box-sizing: border-box; }
         .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70vh; text-align: center; }
         
-        /* Dashboard Stats */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: var(--bg-secondary); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
         .stat-value { font-size: 22px; font-weight: bold; display: block; }
         .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .input-area { display: flex; flex-direction: row; gap: 12px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .input-area { display: flex; flex-direction: row; gap: 12px; background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-start; }
         
         input, select, button { padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); }
         .btn-primary { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); font-size: 11px; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-top: 4px; }
         
-        /* Color Coded Tasks */
         .task-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1.5px solid var(--border); transition: all 0.2s; }
         .task-incomplete { border-color: var(--incomplete); background: rgba(217, 48, 37, 0.05); }
         .task-complete { border-color: var(--complete); background: rgba(0, 123, 255, 0.05); }
@@ -49,6 +48,7 @@
         
         .tab-btn { border: none; background: none; padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 3px solid transparent; white-space: nowrap; }
         .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .manage-link { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: underline; }
         .hidden { display: none !important; }
 
         @media (max-width: 600px) { 
@@ -90,7 +90,13 @@
 
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="New task..." style="flex: 2;">
-            <select id="categorySelect" style="flex: 1;"></select>
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <select id="categorySelect" style="width: 100%;"></select>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                    <span class="manage-link" onclick="promptNewCategory()">+ Add</span>
+                    <span class="btn-danger" onclick="deleteSelectedCategory()">Delete Selected</span>
+                </div>
+            </div>
             <button onclick="addTask()" class="btn-primary">Add</button>
         </div>
 
@@ -120,7 +126,7 @@
 
     let currentUID = null;
     let currentTab = 'daily';
-    let myCategories = ['General', 'VLSI', 'Work', 'Personal'];
+    let myCategories = ['Work', 'Personal'];
 
     window.login = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
@@ -152,6 +158,28 @@
         select.innerHTML = myCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
     }
 
+    window.promptNewCategory = () => {
+        const name = prompt("Enter new category name:");
+        if (name && !myCategories.includes(name.trim())) {
+            myCategories.push(name.trim());
+            saveCategories();
+        }
+    };
+
+    window.deleteSelectedCategory = () => {
+        const select = document.getElementById('categorySelect');
+        const toDelete = select.value;
+        if (!toDelete || myCategories.length <= 1) return;
+        if (confirm(`Remove "${toDelete}" from your list?`)) {
+            myCategories = myCategories.filter(c => c !== toDelete);
+            saveCategories();
+        }
+    };
+
+    function saveCategories() {
+        set(ref(db, `users/${currentUID}/settings/categories`), myCategories);
+    }
+
     window.switchTab = (tab) => {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -162,7 +190,7 @@
     window.addTask = () => {
         const input = document.getElementById('taskInput');
         const category = document.getElementById('categorySelect').value;
-        if (!input.value.trim()) return;
+        if (!input.value.trim() || !category) return;
         push(ref(db, `users/${currentUID}/${currentTab}`), {
             text: input.value.trim(),
             category: category,
@@ -193,12 +221,9 @@
         const taskEntries = tasks ? Object.entries(tasks) : [];
         const total = taskEntries.length;
         const done = taskEntries.filter(([id, t]) => t.completed).length;
-        const pending = total - done;
-
-        // Update Dashboard Stats
         document.getElementById('totalTasks').textContent = total;
         document.getElementById('doneTasks').textContent = done;
-        document.getElementById('pendingTasks').textContent = pending;
+        document.getElementById('pendingTasks').textContent = total - done;
 
         const categoriesInUse = [...new Set(taskEntries.map(([id, t]) => t.category))].sort();
 
