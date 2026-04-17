@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
-<html lang="en" data-theme="dark"> <head>
+<html lang="en" data-theme="dark">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus Tracker Pro</title>
@@ -75,7 +75,7 @@
 
         <div class="dashboard">
             <div class="stat-card"><span class="stat-value" id="totalTasks">0</span><span class="stat-label">Total</span></div>
-            <div class="stat-card"><span class="stat-value" id="totalHrs">0h</span><span class="stat-label">Time Tracked</span></div>
+            <div class="stat-card"><span class="stat-value" id="doneTasks" style="color:var(--complete)">0</span><span class="stat-label">Completed</span></div>
             <div class="stat-card"><span class="stat-value" id="pendingTasks" style="color:var(--incomplete)">0</span><span class="stat-label">Pending</span></div>
         </div>
 
@@ -89,10 +89,7 @@
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="Task name..." style="flex: 2;">
             
-            <div id="dailyTimeGroup" style="display: flex; gap: 5px;">
-                <input type="time" id="timeInput" title="Specific Time">
-                <input type="number" id="hrInput" placeholder="Hrs" style="width: 60px;">
-            </div>
+            <input type="time" id="timeInput" title="Specific Time">
             <input type="date" id="dateInput" class="hidden" title="Deadline Date">
 
             <div style="flex: 1; display: flex; flex-direction: column;">
@@ -177,20 +174,19 @@
     function updateOverallStats() {
         onValue(ref(db, `users/${currentUID}`), (snapshot) => {
             const data = snapshot.val();
-            let total = 0, done = 0, hrs = 0;
+            let total = 0, done = 0;
             if (data) {
                 ['daily', 'weekly', 'monthly', 'yearly'].forEach(tab => {
                     if (data[tab]) {
                         Object.values(data[tab]).forEach(t => {
                             total++;
                             if (t.completed) done++;
-                            if (t.hrs) hrs += parseFloat(t.hrs);
                         });
                     }
                 });
             }
             document.getElementById('totalTasks').textContent = total;
-            document.getElementById('totalHrs').textContent = hrs + 'h';
+            document.getElementById('doneTasks').textContent = done;
             document.getElementById('pendingTasks').textContent = total - done;
         });
     }
@@ -200,13 +196,14 @@
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
         
-        const dailyUI = document.getElementById('dailyTimeGroup');
+        const timeUI = document.getElementById('timeInput');
         const dateUI = document.getElementById('dateInput');
+        
         if (tab === 'daily') {
-            dailyUI.classList.remove('hidden');
+            timeUI.classList.remove('hidden');
             dateUI.classList.add('hidden');
         } else {
-            dailyUI.classList.add('hidden');
+            timeUI.classList.add('hidden');
             dateUI.classList.remove('hidden');
         }
         listenToData();
@@ -214,7 +211,6 @@
 
     window.addTask = () => {
         const input = document.getElementById('taskInput');
-        const hr = document.getElementById('hrInput');
         const time = document.getElementById('timeInput');
         const date = document.getElementById('dateInput');
         const category = document.getElementById('categorySelect').value;
@@ -228,14 +224,13 @@
         };
 
         if (currentTab === 'daily') {
-            payload.hrs = hr.value || 0;
             payload.time = time.value || null;
         } else {
             payload.date = date.value || null;
         }
 
         push(ref(db, `users/${currentUID}/${currentTab}`), payload);
-        input.value = ''; hr.value = ''; time.value = ''; date.value = '';
+        input.value = ''; time.value = ''; date.value = '';
     };
 
     function listenToData() {
@@ -279,15 +274,14 @@
                 item.className = `task-card ${t.completed ? 'task-complete' : 'task-incomplete'}`;
                 
                 let meta = "";
-                if (currentTab === 'daily') {
-                    if (t.time) meta += `<span style="font-size:10px; color:var(--accent); font-weight:bold;">${t.time}</span> `;
-                    if (t.hrs) meta += `<span style="font-size:10px; opacity:0.6;">(${t.hrs}h)</span>`;
+                if (currentTab === 'daily' && t.time) {
+                    meta = `<span style="font-size:10px; color:var(--accent); font-weight:bold;">${t.time}</span>`;
                 } else if (t.date) {
                     meta = `<span style="font-size:10px; color:var(--danger); font-weight:bold;">📅 ${t.date}</span>`;
                 }
 
                 item.innerHTML = `
-                    <div style="display:flex; flex-direction:column; gap:2px; position:absolute; top:2px; right:35px;">${meta}</div>
+                    <div style="position:absolute; top:2px; right:35px;">${meta}</div>
                     <input type="checkbox" ${t.completed ? 'checked' : ''} style="cursor:pointer; width:17px; height:17px;">
                     <span style="flex:1; cursor:pointer; font-size:13px; ${t.completed ? 'text-decoration:line-through; opacity:0.5' : ''}">${t.text}</span>
                     <span style="cursor:pointer; opacity:0.3; padding:5px;" onclick="window.deleteTask('${id}')">✕</span>
@@ -309,4 +303,3 @@
 </script>
 </body>
 </html>
-```
